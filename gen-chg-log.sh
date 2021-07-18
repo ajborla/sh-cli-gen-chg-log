@@ -14,23 +14,26 @@
 #
 # Generates a changelog from git commits.
 #
-# Assumptions:
+# Requirements:
 #
 # * *NIX environment, native or emulated (WSL or msys)
-# * Local git repository exists
+# * Recent versions of bash, gawk, and git installed
+# * Target repository exists, and is filesystem-based i.e. local repo
 #
 # ---
 # USAGE:
 #
 #    ...
 #
-#    <scriptname>.sh --[help|version] | ...
+#    <scriptname>.sh --[help|version] | <REPO> | <REPO> <URL>
 #
 # Examples:
 #
 #    ./<scriptname>.sh --help
 #    ./<scriptname>.sh --version
-#    ./<scriptname>.sh ...
+#    ./<scriptname>.sh .
+#    ./<scriptname>.sh ~/local_repo
+#    ./<scriptname>.sh ~/local_repo https://github.com/user/reponame
 #
 # ----------------------------------------------------------------------
 
@@ -43,7 +46,7 @@ FAILURE=1
 
 # Application-specific -------------------------------------------------
 
-USAGE="$0 --[help|version] | ..."
+USAGE="$0 --[help|version] | <REPO> | <REPO> <URL>"
 APPDESC='Changelog Generator'
 VERSION=0.0.0
 
@@ -88,9 +91,13 @@ function version ()
 
 # ----------------------------------------------------------------------
 # NAME:    main
-# PARMS:   $1: ...
-# RETURNS: ...
-# PURPOSE: ...
+# PARMS:   $1: (string), local git repository name
+#          $2: (string), remote git repository URL
+# RETURNS: $SUCCESS if all operations complete correctly
+# PURPOSE: Application entry point function, performs the following:
+#          -
+#          -
+#          -
 # ----------------------------------------------------------------------
 function main ()
 {
