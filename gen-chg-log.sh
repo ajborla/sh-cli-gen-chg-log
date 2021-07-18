@@ -77,6 +77,17 @@ function badrepo ()
 }
 
 # ----------------------------------------------------------------------
+# NAME:    badURL
+# PARMS:   N/A
+# RETURNS: N/A
+# PURPOSE: Prints message and command-line usage.
+# ----------------------------------------------------------------------
+function badURL ()
+{
+    printf "ERROR: Not a valid URL string.\nUsage: $USAGE\n"
+}
+
+# ----------------------------------------------------------------------
 # NAME:    usage
 # PARMS:   N/A
 # RETURNS: N/A
@@ -107,6 +118,19 @@ function version ()
 function is_local_git_repo ()
 {
     [ -d $(readlink -f "$1")/.git ]
+}
+
+# ----------------------------------------------------------------------
+# NAME:    is_valid_url_string
+# PARMS:   $1: (string, English-only), URL
+# RETURNS: $SUCCESS if $1 is a valid URL string
+# PURPOSE: Tests whether a target string, $1, represents a valid URL
+# ----------------------------------------------------------------------
+function is_valid_url_string ()
+{
+    regex='(file|https?)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*'\
+'[-A-Za-z0-9\+&@#/%=~_|]'
+    [[ "$1" =~ $regex ]]
 }
 
 # Application-specific -------------------------------------------------
@@ -146,6 +170,12 @@ elif [ $# -eq 2 ] ; then
     # Two arguments expected:
     # - Local git repository name
     # - Remote git repository URL
+    is_local_git_repo "$1" \
+        || { badrepo ; exit $FAILURE ; }
+
+    is_valid_url_string "$2" \
+        || { badURL ; exit $FAILURE ; }
+
     main "$1" "$2"
 
 else
