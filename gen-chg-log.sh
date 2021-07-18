@@ -66,6 +66,17 @@ function badargs ()
 }
 
 # ----------------------------------------------------------------------
+# NAME:    badrepo
+# PARMS:   N/A
+# RETURNS: N/A
+# PURPOSE: Prints message and command-line usage.
+# ----------------------------------------------------------------------
+function badrepo ()
+{
+    printf "ERROR: Not a local git repository.\nUsage: $USAGE\n"
+}
+
+# ----------------------------------------------------------------------
 # NAME:    usage
 # PARMS:   N/A
 # RETURNS: N/A
@@ -85,6 +96,17 @@ function usage ()
 function version ()
 {
     printf "Version: $VERSION\n"
+}
+
+# ----------------------------------------------------------------------
+# NAME:    is_local_git_repo
+# PARMS:   $1: (string), name of a filesystem directory
+# RETURNS: $SUCCESS if $1 is a git repo
+# PURPOSE: Tests whether a target directory, $1, is a git repo
+# ----------------------------------------------------------------------
+function is_local_git_repo ()
+{
+    [ -d $(readlink -f "$1")/.git ]
 }
 
 # Application-specific -------------------------------------------------
@@ -114,7 +136,10 @@ if [ $# -eq 1 ] ; then
     case $1 in
         --version|-[vV]) version ;;
         --help|-[hH])    usage ;;
-        *)               main "$1" ;;
+        *)               is_local_git_repo "$1" \
+                             || { badrepo ; exit $FAILURE ; }
+
+                         main "$1" ;;
     esac
 
 elif [ $# -eq 2 ] ; then
