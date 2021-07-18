@@ -101,10 +101,30 @@ function version ()
 # ----------------------------------------------------------------------
 function main ()
 {
-    :
+    printf "Local repo: $1\n"
+    printf "Remote repo: $2\n"
 }
 
 # Entry Point ==========================================================
 
-main
+# Check command-line arguments (expecting 1 or 2)
+if [ $# -eq 1 ] ; then
+    # One argument, expecting a command option, or a local git
+    # repository name
+    case $1 in
+        --version|-[vV]) version ;;
+        --help|-[hH])    usage ;;
+        *)               main "$1" ;;
+    esac
+
+elif [ $# -eq 2 ] ; then
+    # Two arguments expected:
+    # - Local git repository name
+    # - Remote git repository URL
+    main "$1" "$2"
+
+else
+    # No arguments or incorrect number of arguments
+    badargs ; exit $FAILURE
+fi
 
