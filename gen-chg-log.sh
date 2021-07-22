@@ -157,8 +157,25 @@ function main ()
         TARGET_REPO_URL="file://${SOURCE_REPO}"
     fi
 
-    printf "Source repo: ${SOURCE_REPO}\n"
-    printf "Target repo URL: ${TARGET_REPO_URL}\n"
+    # Must switch directory context to source repository
+    pushd ${SOURCE_REPO} > /dev/null
+
+    # For each consecutive tag pair, print commit metadata in that range
+    prev_tag=
+    for curr_tag in $(git tag --sort=-taggerdate) ; do
+        if [ -n "${prev_tag}" ] ; then
+            tag_date=$(git log -1 --format="%ad" \
+                                  --date=short ${prev_tag})
+            printf "## ${prev_tag} (${tag_date})\n\n"
+            git log ${curr_tag}...${prev_tag} \
+                --format="-        %s [%h](${TARGET_REPO_URL}/%H)"
+            printf "\n\n"
+        fi
+        prev_tag=${curr_tag}
+    done
+
+    # Restore directory context
+    popd > /dev/null
 }
 
 # Entry Point ==========================================================
