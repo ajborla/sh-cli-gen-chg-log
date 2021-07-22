@@ -141,14 +141,24 @@ function is_valid_url_string ()
 #          $2: (string), remote git repository URL
 # RETURNS: $SUCCESS if all operations complete correctly
 # PURPOSE: Application entry point function, performs the following:
-#          -
+#          - Adjusts repo path and URL
 #          -
 #          -
 # ----------------------------------------------------------------------
 function main ()
 {
-    printf "Local repo: $1\n"
-    printf "Remote repo: $2\n"
+    # Require a fully-qualified path
+    SOURCE_REPO=$(readlink -f "$1")
+
+    # Require an URL, whether local or remote
+    if [ -n "$2" ] ; then
+        TARGET_REPO_URL="$2"
+    else
+        TARGET_REPO_URL="file://${SOURCE_REPO}"
+    fi
+
+    printf "Source repo: ${SOURCE_REPO}\n"
+    printf "Target repo URL: ${TARGET_REPO_URL}\n"
 }
 
 # Entry Point ==========================================================
