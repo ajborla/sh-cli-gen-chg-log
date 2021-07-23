@@ -147,11 +147,13 @@ function print_log_entries()
     start_tag=${1} ; end_tag=${2}
 
     if [ ${start_tag} == ${end_tag} ] ; then
-        git log ${start_tag} \
-            --format="-        %s [%h](${TARGET_REPO_URL}/%H)"
+        git log ${start_tag} --format="%s|%h|%H" -1 \
+            | sed 's/ /+=+/g'
+        printf "\n"
     else
-        git log ${start_tag}...${end_tag} \
-            --format="-        %s [%h](${TARGET_REPO_URL}/%H)"
+        git log ${start_tag}...${end_tag} --format="%s|%h|%H" \
+            | sed 's/ /+=+/g'
+        printf "\n"
     fi
 }
 
