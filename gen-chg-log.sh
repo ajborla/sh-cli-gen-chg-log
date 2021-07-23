@@ -136,13 +136,13 @@ function is_valid_url_string ()
 # Application-specific -------------------------------------------------
 
 # ----------------------------------------------------------------------
-# NAME:    print_log_entries
+# NAME:    gen_log_entries
 # PARMS:   $1: (hex string), first commit in range
 #          $2: (hex string), last commit in range
 # RETURNS: N/A
-# PURPOSE: Prints commit metadata for commits in specified range
+# PURPOSE: Emits commit metadata for commits in specified range
 # ----------------------------------------------------------------------
-function print_log_entries()
+function gen_log_entries()
 {
     start_tag=${1} ; end_tag=${2}
 
@@ -155,6 +155,20 @@ function print_log_entries()
             | sed 's/ /+=+/g'
         printf "\n"
     fi
+}
+
+# ----------------------------------------------------------------------
+# NAME:    print_log_entries
+# PARMS:   $1: (hex string), first commit in range
+#          $2: (hex string), last commit in range
+# RETURNS: N/A
+# PURPOSE: Prints commit metadata for commits in specified range
+# ----------------------------------------------------------------------
+function print_log_entries()
+{
+    start_tag=${1} ; end_tag=${2}
+
+    gen_log_entries ${start_tag} ${end_tag}
 }
 
 # ----------------------------------------------------------------------
