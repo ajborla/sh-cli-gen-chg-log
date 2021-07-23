@@ -136,6 +136,26 @@ function is_valid_url_string ()
 # Application-specific -------------------------------------------------
 
 # ----------------------------------------------------------------------
+# NAME:    print_log_entries
+# PARMS:   $1: (hex string), first commit in range
+#          $2: (hex string), last commit in range
+# RETURNS: N/A
+# PURPOSE: Prints commit metadata for commits in specified range
+# ----------------------------------------------------------------------
+function print_log_entries()
+{
+    start_tag=${1} ; end_tag=${2}
+
+    if [ ${start_tag} == ${end_tag} ] ; then
+        git log ${start_tag} \
+            --format="-        %s [%h](${TARGET_REPO_URL}/%H)"
+    else
+        git log ${start_tag}...${end_tag} \
+            --format="-        %s [%h](${TARGET_REPO_URL}/%H)"
+    fi
+}
+
+# ----------------------------------------------------------------------
 # NAME:    main
 # PARMS:   $1: (string), local git repository name
 #          $2: (string), remote git repository URL
@@ -167,8 +187,7 @@ function main ()
             tag_date=$(git log -1 --format="%ad" \
                                   --date=short ${prev_tag})
             printf "## ${prev_tag} (${tag_date})\n\n"
-            git log ${curr_tag}...${prev_tag} \
-                --format="-        %s [%h](${TARGET_REPO_URL}/%H)"
+            print_log_entries ${curr_tag} ${prev_tag}
             printf "\n\n"
         fi
         prev_tag=${curr_tag}
@@ -184,11 +203,9 @@ function main ()
     tag_date=$(git log -1 --format="%ad" --date=short ${prev_tag})
     printf "## ${prev_tag} (${tag_date})\n\n"
     if [ ${INITIAL_TAG_COMMIT} == ${INITIAL_COMMIT} ] ; then
-        git log ${INITIAL_TAG_COMMIT} \
-            --format="-        %s [%h](${TARGET_REPO_URL}/%H)"
+        print_log_entries ${INITIAL_TAG_COMMIT} ${INITIAL_TAG_COMMIT}
     else
-        git log ${INITIAL_TAG_COMMIT}...${prev_tag} \
-            --format="-        %s [%h](${TARGET_REPO_URL}/%H)"
+        print_log_entries ${INITIAL_TAG_COMMIT} ${prev_tag}
     fi
     printf "\n\n"
 
