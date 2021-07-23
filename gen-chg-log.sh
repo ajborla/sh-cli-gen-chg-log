@@ -174,6 +174,24 @@ function main ()
         prev_tag=${curr_tag}
     done
 
+    # Print remaining items, and cater for possibility
+    # that INITIAL COMMIT is tagged
+    tag_commit_list=( $(git log --tags --simplify-by-decoration \
+                            --format="%H" --reverse) )
+    INITIAL_TAG_COMMIT=${tag_commit_list[0]}
+    INITIAL_COMMIT=$(git rev-list --max-parents=0 HEAD)
+
+    tag_date=$(git log -1 --format="%ad" --date=short ${prev_tag})
+    printf "## ${prev_tag} (${tag_date})\n\n"
+    if [ ${INITIAL_TAG_COMMIT} == ${INITIAL_COMMIT} ] ; then
+        git log ${INITIAL_TAG_COMMIT} \
+            --format="-        %s [%h](${TARGET_REPO_URL}/%H)"
+    else
+        git log ${INITIAL_TAG_COMMIT}...${prev_tag} \
+            --format="-        %s [%h](${TARGET_REPO_URL}/%H)"
+    fi
+    printf "\n\n"
+
     # Restore directory context
     popd > /dev/null
 }
