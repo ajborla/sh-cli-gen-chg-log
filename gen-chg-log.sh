@@ -168,7 +168,13 @@ function print_log_entries()
 {
     start_tag=${1} ; end_tag=${2}
 
-    gen_log_entries ${start_tag} ${end_tag}
+    while read -r line ; do
+        read -r type category message short long \
+            <<< $(printf "${line}\n" | \
+                    awk 'BEGIN { FPAT = "[a-z]+|(.)|[^:()|]+" } \
+                        { print($1, $3, $6, $8, $10) }')
+        printf "${type} ${category} ${message} ${short} ${long}\n"
+    done <<< $(gen_log_entries ${start_tag} ${end_tag})
 }
 
 # ----------------------------------------------------------------------
