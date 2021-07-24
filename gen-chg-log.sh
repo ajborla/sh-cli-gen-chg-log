@@ -192,7 +192,40 @@ function print_log_entries()
         read -r type category message short long \
             <<< $(printf "${line}\n" | \
                     awk 'BEGIN { FPAT = "[a-z]+|(.)|[^:()|]+" } \
-                        { print($1, $3, $6, $8, $10) }')
+                        {
+                            # subject
+                            if (NF == 5)
+                            {
+                                print("EMPTY", "EMPTY", $1, $3, $5)
+                            }
+                            # type: subject
+                            else if (NF == 7)
+                            {
+                                print($1, "GLOBAL", $3, $5, $7)
+                            }
+                            # type(): subject
+                            else if (NF == 9)
+                            {
+                                print($1, "GLOBAL", $5, $7, $9)
+                            }
+                            # type(category|*): subject
+                            else if (NF == 10)
+                            {
+                                category = ($3 == "*") \
+                                    ? "GLOBAL" \
+                                    : $3;
+                                print($1, category, $6, $8, $10)
+                            }
+                            # Non-conforming format
+                            else
+                            {
+                                desc = "UNKNOWN";
+                                data = (length($0) > 0) \
+                                    ? $0 \
+                                    : "EMPTY";
+                                print(desc, desc, data, desc, desc)
+                            }
+                        }')
         printf "${type} ${category} ${message} ${short} ${long}\n"
     done <<< $(gen_log_entries ${start_tag} ${end_tag})
 }
