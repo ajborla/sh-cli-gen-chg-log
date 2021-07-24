@@ -162,7 +162,27 @@ function gen_log_entries()
 # PARMS:   $1: (hex string), first commit in range
 #          $2: (hex string), last commit in range
 # RETURNS: N/A
-# PURPOSE: Prints commit metadata for commits in specified range
+# PURPOSE: Prints commit metadata for commits in specified range.
+#
+# Commit messages follow the Conventional Commit format, and are
+# expected to have the following structure:
+#
+#     type(category): subject
+#
+# where:
+#
+#     type: feat|refactor|fix|docs|chore|other|perf|test|style|revert
+#     category: zero or one word|*
+#     subject: commit subject (free format, <= ~50 characters)
+#
+# Examples:
+#
+#     Initial commit - add .gitignore, README
+#     feat(main): add command-line argument parsing
+#     refactor: rename all functions
+#     docs(*): change section header fonts
+#     style(): alter commentary for PEP 57 conformance
+#
 # ----------------------------------------------------------------------
 function print_log_entries()
 {
