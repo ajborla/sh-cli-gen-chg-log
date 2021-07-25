@@ -50,6 +50,13 @@ USAGE="$0 --[help|version] | <REPO> | <REPO> <URL>"
 APPDESC='Changelog Generator'
 VERSION=0.0.0
 
+declare -A TYPES
+TYPES=( [chore]="Chores" [docs]="Documentation Changes" \
+        [feat]="New Features" [fix]="Bug Fixes" \
+        [other]="Miscellaneous Tasks" [perf]="Performance Enhancements" \
+        [refactor]="Code Improvements" [revert]="Revert a Change" \
+        [style]="Stylistic Enhancements" [test]="Tests" )
+
 # Subroutines ==========================================================
 
 # Generic --------------------------------------------------------------
@@ -188,7 +195,15 @@ function print_log_entries()
 {
     start_tag=${1} ; end_tag=${2}
 
+    # Field, and record, separators respectively. Require characters
+    # that will not appear in commit subject
+    FSEP='~' ; RSEP='`'
+
+    # 'entries' is an associative array i.e. hash table
+    declare -A entries
+
     while read -r line ; do
+        # Extract fields from current git log line
         read -r type category message short long \
             <<< $(printf "${line}\n" | \
                     awk 'BEGIN { FPAT = "[a-z]+|(.)|[^:()|]+" } \
@@ -226,7 +241,25 @@ function print_log_entries()
                                 print(desc, desc, data, desc, desc)
                             }
                         }')
-        printf "${type} ${category} ${message} ${short} ${long}\n"
+
+        # Assemble fields into record form for storage as an
+        # associative array entry
+        entry="${type}"${FSEP}"${category}"${FSEP}"${message}"${FSEP}"\
+${short}"${FSEP}"${long}"
+
+        # New associative array entries are APPENDED to existing
+        # entries. Simulates an array of lists or records
+        if [ ${entries[${type}]+_} ] ; then
+            entries[${type}]=${entries[${type}]}${RSEP}${entry}
+        else
+            entries[${type}]=${entry}
+        fi
+
+        # Print contents length of current associative array entry
+        # demonstrating successful storage operation
+        entry=${entries[${type}]}
+        printf "${type} length(entries[${type}]) = ${#entry}\n"
+
     done <<< $(gen_log_entries ${start_tag} ${end_tag})
 }
 
