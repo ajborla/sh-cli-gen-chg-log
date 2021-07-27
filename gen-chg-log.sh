@@ -255,12 +255,35 @@ ${short}"${FSEP}"${long}"
             entries[${type}]=${entry}
         fi
 
-        # Print contents length of current associative array entry
-        # demonstrating successful storage operation
-        entry=${entries[${type}]}
-        printf "${type} length(entries[${type}]) = ${#entry}\n"
-
     done <<< $(gen_log_entries ${start_tag} ${end_tag})
+
+    # Ensure entries always printed in same order
+    sorted_entries_keys=$(sort \
+        <<< $(for key in "${!entries[@]}" ; do echo ${key} ; done))
+
+    for entry_key in ${sorted_entries_keys} ; do
+        # Lookup and print type description (or default)
+        if [ ${TYPES[${entry_key}]+_} ] ; then
+            printf "\n### ${TYPES[${entry_key}]}\n"
+        else
+            printf "\n### Other\n"
+        fi
+
+        # Extract and print fields from current entry
+        entry_values=${entries[${entry_key}]}
+        for entry in $(sed 's/'${RSEP}'/\n/g' <<< ${entry_values}) ; do
+            read -r type category message short long \
+                <<< $(sed 's/'${FSEP}'/ /g' <<< ${entry})
+            message=$(sed 's/+=+/ /g' <<< ${message})
+            # Cater for non-typed message
+            if [ ${category} == 'EMPTY' ] ; then
+                printf "* ${message} [${short}](${REPO}/${long})\n"
+            else
+                printf "* **${category}**:${message} [${short}](${REPO}\
+/${long})\n"
+            fi
+        done
+    done
 }
 
 # ----------------------------------------------------------------------
