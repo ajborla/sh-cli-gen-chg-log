@@ -208,20 +208,24 @@ function print_log_entries()
             <<< $(printf "${line}\n" | \
                     awk 'BEGIN { FPAT = "[a-z]+|(.)|[^:()|]+" } \
                         {
+                            # Short and long commit hash are always
+                            # the final two fields, respectively
+                            fld_h = $(NF-2) ; fld_H = $(NF);
+
                             # subject
                             if (NF == 5)
                             {
-                                print("EMPTY", "EMPTY", $1, $3, $5)
+                                print("EMPTY", "EMPTY", $1, fld_h, fld_H)
                             }
                             # type: subject
                             else if (NF == 7)
                             {
-                                print($1, "GLOBAL", $3, $5, $7)
+                                print($1, "GLOBAL", $3, fld_h, fld_H)
                             }
                             # type(): subject
                             else if (NF == 9)
                             {
-                                print($1, "GLOBAL", $5, $7, $9)
+                                print($1, "GLOBAL", $5, fld_h, fld_H)
                             }
                             # type(category|*): subject
                             else if (NF == 10)
@@ -229,7 +233,7 @@ function print_log_entries()
                                 category = ($3 == "*") \
                                     ? "GLOBAL" \
                                     : $3;
-                                print($1, category, $6, $8, $10)
+                                print($1, category, $6, fld_h, fld_H)
                             }
                             # Non-conforming format
                             else
