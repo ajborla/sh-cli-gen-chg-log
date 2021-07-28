@@ -379,9 +379,9 @@ function main ()
         if [ -n "${prev_tag}" ] ; then
             tag_date=$(git log -1 --format="%ad" \
                                   --date=short ${prev_tag})
-            printf "## ${prev_tag} (${tag_date})\n\n"
+            printf "## ${prev_tag} (${tag_date})\n"
             print_log_entries ${curr_tag} ${prev_tag}
-            printf "\n\n"
+            printf "\n"
         fi
         prev_tag=${curr_tag}
     done
@@ -394,13 +394,13 @@ function main ()
     INITIAL_COMMIT=$(git rev-list --max-parents=0 HEAD)
 
     tag_date=$(git log -1 --format="%ad" --date=short ${prev_tag})
-    printf "## ${prev_tag} (${tag_date})\n\n"
+    printf "## ${prev_tag} (${tag_date})\n"
     if [ ${INITIAL_TAG_COMMIT} == ${INITIAL_COMMIT} ] ; then
         print_log_entries ${INITIAL_TAG_COMMIT} ${INITIAL_TAG_COMMIT}
     else
         print_log_entries ${INITIAL_TAG_COMMIT} ${prev_tag}
     fi
-    printf "\n\n"
+    printf "\n"
 
     # Restore directory context
     popd > /dev/null
