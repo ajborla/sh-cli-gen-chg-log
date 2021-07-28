@@ -168,6 +168,7 @@ function gen_log_entries()
 # NAME:    print_log_entries
 # PARMS:   $1: (hex string), first commit in range
 #          $2: (hex string), last commit in range
+#          $3: (string), filesystem directory|URL
 # RETURNS: N/A
 # PURPOSE: Prints commit metadata for commits in specified range.
 #
@@ -193,7 +194,7 @@ function gen_log_entries()
 # ----------------------------------------------------------------------
 function print_log_entries()
 {
-    start_tag=${1} ; end_tag=${2}
+    start_tag=${1} ; end_tag=${2} ; REPO=${3}
 
     # Field, and record, separators respectively. Require characters
     # that will not appear in commit subject
@@ -380,7 +381,7 @@ function main ()
             tag_date=$(git log -1 --format="%ad" \
                                   --date=short ${prev_tag})
             printf "## ${prev_tag} (${tag_date})\n"
-            print_log_entries ${curr_tag} ${prev_tag}
+            print_log_entries ${curr_tag} ${prev_tag} ${TARGET_REPO_URL}
             printf "\n"
         fi
         prev_tag=${curr_tag}
@@ -396,9 +397,11 @@ function main ()
     tag_date=$(git log -1 --format="%ad" --date=short ${prev_tag})
     printf "## ${prev_tag} (${tag_date})\n"
     if [ ${INITIAL_TAG_COMMIT} == ${INITIAL_COMMIT} ] ; then
-        print_log_entries ${INITIAL_TAG_COMMIT} ${INITIAL_TAG_COMMIT}
+        print_log_entries ${INITIAL_TAG_COMMIT} ${INITIAL_TAG_COMMIT} \
+                          ${TARGET_REPO_URL}
     else
-        print_log_entries ${INITIAL_TAG_COMMIT} ${prev_tag}
+        print_log_entries ${INITIAL_TAG_COMMIT} ${prev_tag} \
+                          ${TARGET_REPO_URL}
     fi
     printf "\n"
 
