@@ -197,7 +197,7 @@ function print_log_entries()
 
     # Field, and record, separators respectively. Require characters
     # that will not appear in commit subject
-    FSEP='~' ; RSEP='`'
+    FSEP=035 ; RSEP=036
 
     # 'entries' is an associative array i.e. hash table
     declare -A entries
