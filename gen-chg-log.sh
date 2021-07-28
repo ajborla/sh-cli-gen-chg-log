@@ -235,14 +235,72 @@ function print_log_entries()
                                     : $3;
                                 print($1, category, $6, fld_h, fld_H)
                             }
-                            # Non-conforming format
+                            # Non-conforming format - needs special handling
                             else
                             {
-                                desc = "UNKNOWN";
-                                data = (length($0) > 0) \
-                                    ? $0 \
-                                    : "EMPTY";
-                                print(desc, desc, data, desc, desc)
+                                # Exclude commit hashes from extracted data
+                                record = \
+                                    substr($0, 0, \
+                                        length($0) - \
+                                        (length(fld_h) + length(fld_H) + 2));
+
+                                # Split into PREFACE : SUBJECT segments
+                                num_segments = \
+                                    split(record, segments, ":", seps);
+
+                                # No split occurred because ":" not present
+                                # so assume whole record is a SUBJECT
+                                if (num_segments == 1)
+                                {
+                                    print("EMPTY", "EMPTY", \
+                                          segments[1], fld_h, fld_H);
+                                }
+                                # A split occured, we have PREFACE and
+                                # SUBJECT, so further process
+                                else
+                                {
+                                    # Concatenate all SUBJECT-related
+                                    # segments into a single SUBJECT
+                                    subject = ""
+                                    for (i = 2; i <= length(segments); ++i)
+                                    {
+                                        subject = \
+                                            subject""segments[i]""seps[i];
+                                    }
+
+                                    # Attempt a split of PREFACE further
+                                    # into TYPE(CATEGORY)
+                                    num_type_segments = \
+                                        split(segments[1], \
+                                              type_segments, \
+                                              "(", type_seps);
+
+                                    # Split failed, so assume it was
+                                    # of the form: TYPE: ...
+                                    if (num_type_segments == 1)
+                                    {
+                                        print(type_segments[1], "GLOBAL", \
+                                              subject, fld_h, fld_H);
+                                    }
+                                    # Split occurred, we have TYPE(CATEGORY)
+                                    # so extract and adjust CATEGORY
+                                    else
+                                    {
+                                        num_category_segments = \
+                                            split(type_segments[2], \
+                                                  category_segments, ")", \
+                                                  category_seps);
+
+                                        # We either have "*" or a category
+                                        category = \
+                                            (category_segments[1] == "*" \
+                                                ? "GLOBAL" \
+                                                : category_segments[1]);
+
+                                        print(type_segments[1], category, \
+                                              subject, fld_h, fld_H);
+                                    }
+                                }
                             }
                         }')
 
