@@ -172,7 +172,7 @@ function gen_log_entries()
 # RETURNS: N/A
 # PURPOSE: Prints commit metadata for commits in specified range.
 #
-# Commit messages follow the Conventional Commit format, and are
+# Commit subject lines follow the Conventional Commit format, and are
 # expected to have the following structure:
 #
 #     type(category): subject
@@ -205,28 +205,28 @@ function print_log_entries()
 
     while read -r line ; do
         # Extract fields from current git log line
-        read -r type category message short long \
+        read -r type category subject short_hash long_hash \
             <<< $(printf "${line}\n" | \
                     awk 'BEGIN { FPAT = "[a-z]+|(.)|[^:()|]+" } \
                         {
                             # Short and long commit hash are always
                             # the final two fields, respectively
-                            fld_h = $(NF-2) ; fld_H = $(NF);
+                            short_hash = $(NF-2) ; long_hash = $(NF);
 
                             # subject
                             if (NF == 5)
                             {
-                                print("EMPTY", "EMPTY", $1, fld_h, fld_H)
+                                print("EMPTY", "EMPTY", $1, short_hash, long_hash)
                             }
                             # type: subject
                             else if (NF == 7)
                             {
-                                print($1, "GLOBAL", $3, fld_h, fld_H)
+                                print($1, "GLOBAL", $3, short_hash, long_hash)
                             }
                             # type(): subject
                             else if (NF == 9)
                             {
-                                print($1, "GLOBAL", $5, fld_h, fld_H)
+                                print($1, "GLOBAL", $5, short_hash, long_hash)
                             }
                             # type(category|*): subject
                             else if (NF == 10)
@@ -234,7 +234,7 @@ function print_log_entries()
                                 category = ($3 == "*") \
                                     ? "GLOBAL" \
                                     : $3;
-                                print($1, category, $6, fld_h, fld_H)
+                                print($1, category, $6, short_hash, long_hash)
                             }
                             # Non-conforming format - needs special handling
                             else
@@ -243,7 +243,7 @@ function print_log_entries()
                                 record = \
                                     substr($0, 0, \
                                         length($0) - \
-                                        (length(fld_h) + length(fld_H) + 2));
+                                        (length(short_hash) + length(long_hash) + 2));
 
                                 # Split into PREFACE : SUBJECT segments
                                 num_segments = \
@@ -254,7 +254,7 @@ function print_log_entries()
                                 if (num_segments == 1)
                                 {
                                     print("EMPTY", "EMPTY", \
-                                          segments[1], fld_h, fld_H);
+                                          segments[1], short_hash, long_hash);
                                 }
                                 # A split occured, we have PREFACE and
                                 # SUBJECT, so further process
@@ -281,7 +281,7 @@ function print_log_entries()
                                     if (num_type_segments == 1)
                                     {
                                         print(type_segments[1], "GLOBAL", \
-                                              subject, fld_h, fld_H);
+                                              subject, short_hash, long_hash);
                                     }
                                     # Split occurred, we have TYPE(CATEGORY)
                                     # so extract and adjust CATEGORY
@@ -299,7 +299,7 @@ function print_log_entries()
                                                 : category_segments[1]);
 
                                         print(type_segments[1], category, \
-                                              subject, fld_h, fld_H);
+                                              subject, short_hash, long_hash);
                                     }
                                 }
                             }
@@ -307,8 +307,8 @@ function print_log_entries()
 
         # Assemble fields into record form for storage as an
         # associative array entry
-        entry="${type}"${FSEP}"${category}"${FSEP}"${message}"${FSEP}"\
-${short}"${FSEP}"${long}"
+        entry="${type}"${FSEP}"${category}"${FSEP}"${subject}"${FSEP}"\
+${short_hash}"${FSEP}"${long_hash}"
 
         # New associative array entries are APPENDED to existing
         # entries. Simulates an array of lists or records
@@ -335,14 +335,14 @@ ${short}"${FSEP}"${long}"
         # Extract and print fields from current entry
         entry_values=${entries[${entry_key}]}
         for entry in $(sed 's/'${RSEP}'/\n/g' <<< ${entry_values}) ; do
-            read -r type category message short long \
+            read -r type category subject short_hash long_hash \
                 <<< $(sed 's/'${FSEP}'/ /g' <<< ${entry})
-            message=$(sed 's/+=+/ /g' <<< ${message})
-            # Cater for non-typed message
+            subject=$(sed 's/+=+/ /g' <<< ${subject})
+            # Cater for non-typed subject lines
             if [ ${category} == 'EMPTY' ] ; then
-                printf "* ${message} [${short}](${REPO}/${long})\n"
+                printf "* ${subject} [${short_hash}](${REPO}/${long_hash})\n"
             else
-                printf "* **${category}**:${message} [${short}](${REPO}\
+                printf "* **${category}**:${subject} [${short_hash}](${REPO}\
 /${long})\n"
             fi
         done
