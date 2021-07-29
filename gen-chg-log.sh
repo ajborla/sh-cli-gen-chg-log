@@ -196,157 +196,161 @@ function print_log_entries()
 {
     start_tag=${1} ; end_tag=${2} ; REPO=${3}
 
-    # Field, and record, separators respectively. Require characters
-    # that will not appear in commit subject
-    FSEP=035 ; RSEP=036
-
-    # 'entries' is an associative array i.e. hash table
-    declare -A entries
-
-    while read -r line ; do
-        # Extract fields from current git log line
-        read -r type category subject short_hash long_hash \
-            <<< $(printf "${line}\n" | \
-                    awk 'BEGIN { FPAT = "[a-z]+|(.)|[^:()|]+" } \
-                        {
-                            # Short and long commit hash are always
-                            # the final two fields, respectively
-                            short_hash = $(NF-2) ; long_hash = $(NF);
-
-                            # subject
-                            if (NF == 5)
-                            {
-                                print("EMPTY", "EMPTY", $1, short_hash, long_hash)
-                            }
-                            # type: subject
-                            else if (NF == 7)
-                            {
-                                print($1, "GLOBAL", $3, short_hash, long_hash)
-                            }
-                            # type(): subject
-                            else if (NF == 9)
-                            {
-                                print($1, "GLOBAL", $5, short_hash, long_hash)
-                            }
-                            # type(category|*): subject
-                            else if (NF == 10)
-                            {
-                                category = ($3 == "*") \
-                                    ? "GLOBAL" \
-                                    : $3;
-                                print($1, category, $6, short_hash, long_hash)
-                            }
-                            # Non-conforming format - needs special handling
-                            else
-                            {
-                                # Exclude commit hashes from extracted data
-                                record = \
-                                    substr($0, 0, \
-                                        length($0) - \
-                                        (length(short_hash) + length(long_hash) + 2));
-
-                                # Split into PREFACE : SUBJECT segments
-                                num_segments = \
-                                    split(record, segments, ":", seps);
-
-                                # No split occurred because ":" not present
-                                # so assume whole record is a SUBJECT
-                                if (num_segments == 1)
-                                {
-                                    print("EMPTY", "EMPTY", \
-                                          segments[1], short_hash, long_hash);
-                                }
-                                # A split occured, we have PREFACE and
-                                # SUBJECT, so further process
-                                else
-                                {
-                                    # Concatenate all SUBJECT-related
-                                    # segments into a single SUBJECT
-                                    subject = ""
-                                    for (i = 2; i <= length(segments); ++i)
-                                    {
-                                        subject = \
-                                            subject""segments[i]""seps[i];
-                                    }
-
-                                    # Attempt a split of PREFACE further
-                                    # into TYPE(CATEGORY)
-                                    num_type_segments = \
-                                        split(segments[1], \
-                                              type_segments, \
-                                              "(", type_seps);
-
-                                    # Split failed, so assume it was
-                                    # of the form: TYPE: ...
-                                    if (num_type_segments == 1)
-                                    {
-                                        print(type_segments[1], "GLOBAL", \
-                                              subject, short_hash, long_hash);
-                                    }
-                                    # Split occurred, we have TYPE(CATEGORY)
-                                    # so extract and adjust CATEGORY
-                                    else
-                                    {
-                                        num_category_segments = \
-                                            split(type_segments[2], \
-                                                  category_segments, ")", \
-                                                  category_seps);
-
-                                        # We either have "*" or a category
-                                        category = \
-                                            (category_segments[1] == "*" \
-                                                ? "GLOBAL" \
-                                                : category_segments[1]);
-
-                                        print(type_segments[1], category, \
-                                              subject, short_hash, long_hash);
-                                    }
-                                }
-                            }
-                        }')
-
-        # Assemble fields into record form for storage as an
-        # associative array entry
-        entry="${type}"${FSEP}"${category}"${FSEP}"${subject}"${FSEP}"\
-${short_hash}"${FSEP}"${long_hash}"
-
-        # New associative array entries are APPENDED to existing
-        # entries. Simulates an array of lists or records
-        if [ ${entries[${type}]+_} ] ; then
-            entries[${type}]=${entries[${type}]}${RSEP}${entry}
-        else
-            entries[${type}]=${entry}
-        fi
-
-    done <<< $(gen_log_entries ${start_tag} ${end_tag})
-
-    # Ensure entries always printed in same order
-    sorted_entries_keys=$(sort \
-        <<< $(for key in "${!entries[@]}" ; do echo ${key} ; done))
-
-    for entry_key in ${sorted_entries_keys} ; do
-        # Lookup and print type description (or default)
-        if [ ${TYPES[${entry_key}]+_} ] ; then
-            printf "\n### ${TYPES[${entry_key}]}\n"
-        else
-            printf "\n### Other\n"
-        fi
-
-        # Extract and print fields from current entry
-        entry_values=${entries[${entry_key}]}
-        for entry in $(sed 's/'${RSEP}'/\n/g' <<< ${entry_values}) ; do
-            read -r type category subject short_hash long_hash \
-                <<< $(sed 's/'${FSEP}'/ /g' <<< ${entry})
-            subject=$(sed 's/+=+/ /g' <<< ${subject})
-            # Cater for non-typed subject lines
-            if [ ${category} == 'EMPTY' ] ; then
-                printf "* ${subject} [${short_hash}](${REPO}/${long_hash})\n"
-            else
-                printf "* **${category}**:${subject} [${short_hash}](${REPO}\
-/${long})\n"
-            fi
-        done
-    done
+#   # Field, and record, separators respectively. Require characters
+#   # that will not appear in commit subject
+#   FSEP=035 ; RSEP=036
+#
+#   # 'entries' is an associative array i.e. hash table
+#   declare -A entries
+#
+#   while read -r line ; do
+#       # Extract fields from current git log line
+#       read -r type category subject short_hash long_hash \
+#           <<< $(printf "${line}\n" | \
+###
+    gen_log_entries ${start_tag} ${end_tag} | \
+        awk 'NF > 0 { print(NF, $0); } END{ print("***EOG***"); }'
+###
+#                   awk 'BEGIN {
+#                           FPAT = "[a-z]+|(.)|[^:()|]+";
+#                       }
+#                       NF > 0 {
+#                           # Short and long commit hash are always
+#                           # the final two fields, respectively
+#                           short_hash = $(NF-2) ; long_hash = $(NF);
+#
+#                           # subject
+#                           if (NF == 5)
+#                           {
+#                               print("EMPTY", "EMPTY", $1, short_hash, long_hash)
+#                           }
+#                           # type: subject
+#                           else if (NF == 7)
+#                           {
+#                               print($1, "GLOBAL", $3, short_hash, long_hash)
+#                           }
+#                           # type(): subject
+#                           else if (NF == 9)
+#                           {
+#                               print($1, "GLOBAL", $5, short_hash, long_hash)
+#                           }
+#                           # type(category|*): subject
+#                           else if (NF == 10)
+#                           {
+#                               category = ($3 == "*") \
+#                                   ? "GLOBAL" \
+#                                   : $3;
+#                               print($1, category, $6, short_hash, long_hash)
+#                           }
+#                           # Non-conforming format - needs special handling
+#                           else
+#                           {
+#                               # Exclude commit hashes from extracted data
+#                               record = \
+#                                   substr($0, 0, \
+#                                       length($0) - \
+#                                       (length(short_hash) + length(long_hash) + 2));
+#
+#                               # Split into PREFACE : SUBJECT segments
+#                               num_segments = \
+#                                   split(record, segments, ":", seps);
+#
+#                               # No split occurred because ":" not present
+#                               # so assume whole record is a SUBJECT
+#                               if (num_segments == 1)
+#                               {
+#                                   print("EMPTY", "EMPTY", \
+#                                         segments[1], short_hash, long_hash);
+#                               }
+#                               # A split occured, we have PREFACE and
+#                               # SUBJECT, so further process
+#                               else
+#                               {
+#                                   # Concatenate all SUBJECT-related
+#                                   # segments into a single SUBJECT
+#                                   subject = ""
+#                                   for (i = 2; i <= length(segments); ++i)
+#                                   {
+#                                       subject = \
+#                                           subject""segments[i]""seps[i];
+#                                   }
+#
+#                                   # Attempt a split of PREFACE further
+#                                   # into TYPE(CATEGORY)
+#                                   num_type_segments = \
+#                                       split(segments[1], \
+#                                             type_segments, \
+#                                             "(", type_seps);
+#
+#                                   # Split failed, so assume it was
+#                                   # of the form: TYPE: ...
+#                                   if (num_type_segments == 1)
+#                                   {
+#                                       print(type_segments[1], "GLOBAL", \
+#                                             subject, short_hash, long_hash);
+#                                   }
+#                                   # Split occurred, we have TYPE(CATEGORY)
+#                                   # so extract and adjust CATEGORY
+#                                   else
+#                                   {
+#                                       num_category_segments = \
+#                                           split(type_segments[2], \
+#                                                 category_segments, ")", \
+#                                                 category_seps);
+#
+#                                       # We either have "*" or a category
+#                                       category = \
+#                                           (category_segments[1] == "*" \
+#                                               ? "GLOBAL" \
+#                                               : category_segments[1]);
+#
+#                                       print(type_segments[1], category, \
+#                                             subject, short_hash, long_hash);
+#                                   }
+#                               }
+#                           }
+#                       }')
+#
+#       # Assemble fields into record form for storage as an
+#       # associative array entry
+#       entry="${type}"${FSEP}"${category}"${FSEP}"${subject}"${FSEP}"${short_hash}"${FSEP}"${long_hash}"
+#
+#       # New associative array entries are APPENDED to existing
+#       # entries. Simulates an array of lists or records
+#       if [ ${entries[${type}]+_} ] ; then
+#           entries[${type}]=${entries[${type}]}${RSEP}${entry}
+#       else
+#           entries[${type}]=${entry}
+#       fi
+#
+#   done <<< $(gen_log_entries ${start_tag} ${end_tag})
+#
+#   # Ensure entries always printed in same order
+#   sorted_entries_keys=$(sort \
+#       <<< $(for key in "${!entries[@]}" ; do echo ${key} ; done))
+#
+#   for entry_key in ${sorted_entries_keys} ; do
+#       # Lookup and print type description (or default)
+#       if [ ${TYPES[${entry_key}]+_} ] ; then
+#           printf "\n### ${TYPES[${entry_key}]}\n"
+#       else
+#           printf "\n### Other\n"
+#       fi
+#
+#       # Extract and print fields from current entry
+#       entry_values=${entries[${entry_key}]}
+#       for entry in $(sed 's/'${RSEP}'/\n/g' <<< ${entry_values}) ; do
+#           read -r type category subject short_hash long_hash \
+#               <<< $(sed 's/'${FSEP}'/ /g' <<< ${entry})
+#           subject=$(sed 's/+=+/ /g' <<< ${subject})
+#           # Cater for non-typed subject line
+#           if [ ${category} == 'EMPTY' ] ; then
+#               printf "* ${subject} [${short_hash}](${REPO}/${long_hash})\n"
+#           else
+#               printf "* **${category}**:${subject} [${short_hash}](${REPO}\${long_hash})\n"
+#           fi
+#       done
+#   done
 }
 
 # ----------------------------------------------------------------------
