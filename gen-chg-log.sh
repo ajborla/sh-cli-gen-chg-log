@@ -224,19 +224,22 @@ function print_log_entries()
                 if (NF == 5)
                 {
                 ##  print("EMPTY", "EMPTY", $1, short_hash, long_hash)
-                    entries["EMPTY","EMPTY",short_hash,long_hash] = $1
+                    entries["EMPTY"]["EMPTY"][short_hash] = \
+                        long_hash SUBSEP $1
                 }
                 # type: subject
                 else if (NF == 7)
                 {
                 ##  print($1, "GLOBAL", $3, short_hash, long_hash)
-                    entries[$1,"GLOBAL",short_hash,long_hash] = $3
+                    entries[$1]["GLOBAL"][short_hash] = \
+                        long_hash SUBSEP $3
                 }
                 # type(): subject
                 else if (NF == 9)
                 {
                 ##  print($1, "GLOBAL", $5, short_hash, long_hash)
-                    entries[$1,"GLOBAL",short_hash,long_hash] = $5
+                    entries[$1]["GLOBAL"][short_hash] = \
+                        long_hash SUBSEP $5
                 }
                 # type(category|*): subject
                 else if (NF == 10)
@@ -245,7 +248,8 @@ function print_log_entries()
                         ? "GLOBAL" \
                         : $3;
                 ##  print($1, category, $6, short_hash, long_hash)
-                    entries[$1,category,short_hash,long_hash] = $6
+                    entries[$1][category][short_hash] = \
+                        long_hash SUBSEP $6
                 }
                 # Non-conforming format - needs special handling
                 else
@@ -266,8 +270,8 @@ function print_log_entries()
                     {
                 ##      print("EMPTY", "EMPTY", \
                 ##            segments[1], short_hash, long_hash);
-                        entries["EMPTY","EMPTY",short_hash,long_hash] \
-                            = segments[1]
+                        entries["EMPTY"]["EMPTY"][short_hash] = \
+                            long_hash SUBSEP segments[1]
                     }
                     # A split occured, we have PREFACE and
                     # SUBJECT, so further process
@@ -296,8 +300,8 @@ function print_log_entries()
                 ##          print(type_segments[1], "GLOBAL", \
                 ##                subject, short_hash, long_hash);
                             TS1 = type_segments[1]
-                            entries[TS1,"GLOBAL",short_hash,long_hash] \
-                                = subject
+                            entries[TS1]["GLOBAL"][short_hash] = \
+                                long_hash SUBSEP subject
                         }
                         # Split occurred, we have TYPE(CATEGORY)
                         # so extract and adjust CATEGORY
@@ -317,8 +321,8 @@ function print_log_entries()
                 ##          print(type_segments[1], category, \
                 ##                subject, short_hash, long_hash);
                             TS1 = type_segments[1];
-                            entries[TS1,category,short_hash,long_hash] \
-                                = subject;
+                            entries[TS1][category][short_hash] = \
+                                long_hash SUBSEP subject;
                         }
                     }
                 }
@@ -327,18 +331,23 @@ function print_log_entries()
                 #
                 # Process previously built associative array using:
                 #
-                # entries[type,category,short_hash,long_hash] = \
-                #     subject
+                # entries[type][category][short_hash] = \
+                #     long_hash SUBSEP subject
                 #
-                for (entry in entries) {
-                    split(entry, keys, SUBSEP);
-                    type = keys[1];
-                    category = keys[2];
-                    short_hash = keys[3];
-                    long_hash = keys[4];
-                    subject = entries[type,category,short_hash,long_hash];
-                    # Print line to "prove" associative array loaded
-                    print(type"@"category"@"subject"@"short_hash"@"long_hash);
+                for (type in entries)
+                {
+                    for (category in entries[type])
+                    {
+                        for (short_hash in entries[type][category])
+                        {
+                            entry = entries[type][category][short_hash];
+                            split(entry, values, SUBSEP);
+                            long_hash = values[1];
+                            subject = values[2];
+                            # Print line to "prove" associative array loaded
+                            print(type"@"category"@"subject"@"short_hash"@"long_hash);
+                        }
+                    }
                 }
                 print("***EOG***");
             }'
