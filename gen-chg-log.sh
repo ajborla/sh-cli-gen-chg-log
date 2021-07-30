@@ -12,9 +12,49 @@
 # ---
 # DESCRIPTION:
 #
-# Generates a changelog from git commits.
+# Generates a changelog, in Markdown format, from git commits.
 #
-# Requirements:
+# Effective changelog generation relies on the repository meeting
+# several requirements:
+#
+# * Repository MUST BE tagged, but no tag format requirements
+# * Commit subject line should follow Conventional Commit format, but
+#   this is not mandatory; it facilitates commit categorisation
+#
+# Tags provide the grouping criterion for commits. They are used to
+# create tag ranges. For example, tags v1.0.0 and v2.0.0 form a tag
+# range. Commits dated between those two tags will appear together.
+# Semantically, tags represent milestones in the evolution of the
+# repository, most often, releases. It makes little sense to create
+# a changelog if there are no milestones !
+#
+# The Conventional Commit format for subject lines provides metadata
+# that may be parsed, and used to categorise commits. This enhances
+# the utility of the generated changelog. It is, not, however,
+# essential that it be followed. Non-conforming commits will appear
+# unardorned under the "Other" section.
+#
+# Commit subject lines following the Conventional Commit format have
+# the following structure:
+#
+#     type(category): subject
+#
+# where:
+#
+#     type: feat|refactor|fix|docs|chore|other|perf|test|style|revert
+#     category: zero or one word|*
+#     subject: commit subject (free format, <= ~50 characters)
+#
+# Examples:
+#
+#     Initial commit - add .gitignore, README
+#     feat(main): add command-line argument parsing
+#     refactor: rename all functions
+#     docs(*): change section header fonts
+#     style(): alter commentary for PEP 57 conformance
+#
+# ---
+# REQUIREMENTS:
 #
 # * *NIX environment, native or emulated (WSL or msys)
 # * Recent versions of bash, gawk, and git installed
@@ -23,17 +63,53 @@
 # ---
 # USAGE:
 #
-#    ...
+# Script may be located in the current directory, or the <REPO>
+# directory, or in the PATH. Requirements:
+# * <REPO> must exist (can, optionally, be the current directory)
+# * <URL> must be a well-formed; no checks made for its existence
 #
-#    <scriptname>.sh --[help|version] | <REPO> | <REPO> <URL>
+# Invocation as follows:
 #
-# Examples:
+#    gen-chg-log.sh --[help|version] | <REPO> | <REPO> <URL>
 #
-#    ./<scriptname>.sh --help
-#    ./<scriptname>.sh --version
-#    ./<scriptname>.sh .
-#    ./<scriptname>.sh ~/local_repo
-#    ./<scriptname>.sh ~/local_repo https://github.com/user/reponame
+# Options for help, and version display, are available.
+#
+# Invoking with <REPO> expands <REPO> to a full path, <FQP_REPO>,
+# and traverses this path to generate the changelog. For each
+# commit, a link to the long commit hash appears as:
+#
+#     file:///<FQP_REPO>/...long commit hash...
+#
+# Use case for this invocation is if generating a changelog meant to
+# locally hosted, usually for testing purposes.
+#
+# Invoking with <REPO> <URL> performs identically except that the long
+# commit hash links appear as:
+#
+#     <URL>/...long commit hash...
+#
+# This type of invocation is for the more typical use case, for
+# generating a changelog meant to be remotely hosted.
+#
+# Examples of possible command-line invocations:
+#
+#    # Print usage information
+#    gen-chg-log.sh --help
+#
+#    # Print application version number
+#    ./gen-chg-log.sh --version
+#
+#    # Prints changelog of current directory
+#    ./gen-chg-log.sh .
+#
+#    # Prints changelog of ~/local_repo redirected to CHANGELOG.md
+#    # with file:///-prefaced long hash links
+#    ./gen-chg-log.sh ~/local_repo > CHANGELOG.md
+#
+#    # Prints changelog of ~/local_repo redirected to CHANGELOG.md
+#    # with https://-prefaced long hash links
+#    ./gen-chg-log.sh ~/local_repo \
+#                     https://github.com/user/reponame > CHANGELOG.md
 #
 # ----------------------------------------------------------------------
 
@@ -164,26 +240,6 @@ function gen_log_entries()
 #          $3: (string), filesystem directory|URL
 # RETURNS: N/A
 # PURPOSE: Prints commit metadata for commits in specified range.
-#
-# Commit subject lines follow the Conventional Commit format, and are
-# expected to have the following structure:
-#
-#     type(category): subject
-#
-# where:
-#
-#     type: feat|refactor|fix|docs|chore|other|perf|test|style|revert
-#     category: zero or one word|*
-#     subject: commit subject (free format, <= ~50 characters)
-#
-# Examples:
-#
-#     Initial commit - add .gitignore, README
-#     feat(main): add command-line argument parsing
-#     refactor: rename all functions
-#     docs(*): change section header fonts
-#     style(): alter commentary for PEP 57 conformance
-#
 # ----------------------------------------------------------------------
 function print_log_entries()
 {
@@ -367,9 +423,12 @@ TDV = "chore;Chores,docs;Documentation Changes,feat;New Features,"\
 #          $2: (string), remote git repository URL
 # RETURNS: $SUCCESS if all operations complete correctly
 # PURPOSE: Application entry point function, performs the following:
-#          - Adjusts repo path and URL
-#          -
-#          -
+# - Adjusts repo path and URL
+# - Makes $1 the current directory
+# - Traverse the git repository tree via `git log` invocations,
+#   extracting commit metadata, and printing decorated metadata grouped
+#   by tag in reverse tag date order i.e. most recent at the top
+# - Restores previous directory context
 # ----------------------------------------------------------------------
 function main ()
 {
