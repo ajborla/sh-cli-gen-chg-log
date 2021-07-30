@@ -50,13 +50,6 @@ USAGE="$0 --[help|version] | <REPO> | <REPO> <URL>"
 APPDESC='Changelog Generator'
 VERSION=0.0.0
 
-declare -A TYPES
-TYPES=( [chore]="Chores" [docs]="Documentation Changes" \
-        [feat]="New Features" [fix]="Bug Fixes" \
-        [other]="Miscellaneous Tasks" [perf]="Performance Enhancements" \
-        [refactor]="Code Improvements" [revert]="Revert a Change" \
-        [style]="Stylistic Enhancements" [test]="Tests" )
-
 # Subroutines ==========================================================
 
 # Generic --------------------------------------------------------------
