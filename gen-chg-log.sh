@@ -212,7 +212,7 @@ function print_log_entries()
 ###     awk 'NF > 0 { print(NF, $0); } END{ print("***EOG***"); }'
 ###
     gen_log_entries ${start_tag} ${end_tag} | \
-        awk 'BEGIN {
+        awk -v REPO=${REPO} 'BEGIN {
                 FPAT = "[a-z]+|(.)|[^:()|]+";
             }
             NF > 0 {
@@ -353,6 +353,16 @@ TDV = "chore;Chores,docs;Documentation Changes,feat;New Features,"\
                 #
                 for (type in entries)
                 {
+                    # Use type header description if known
+                    if (type in TYPE_DESC)
+                    {
+                        printf("\n### %s\n", TYPE_DESC[type]);
+                    }
+                    else
+                    {
+                        printf("\n### Other\n");
+                    }
+
                     for (category in entries[type])
                     {
                         for (short_hash in entries[type][category])
@@ -360,13 +370,26 @@ TDV = "chore;Chores,docs;Documentation Changes,feat;New Features,"\
                             entry = entries[type][category][short_hash];
                             split(entry, values, SUBSEP);
                             long_hash = values[1];
-                            subject = values[2];
-                            # Print line (with type description) to "prove" associative array loaded
-                            print(TYPE_DESC[type]"@"category"@"subject"@"short_hash"@"long_hash);
+                            # Restore subject whitespace
+                            subject = gensub(/\+=\+/, " ", "g", values[2]);
+
+                            # Cater for non-typed subject line
+                            if (category == "EMPTY")
+                            {
+                                printf("* %s [%s](%s/%s)\n", \
+                                       subject, short_hash, \
+                                       REPO, long_hash);
+                            }
+                            else
+                            {
+                                printf("* **%s**:%s [%s](%s/%s)\n", \
+                                       category, subject, short_hash, \
+                                       REPO, long_hash);
+                            }
                         }
                     }
                 }
-                print("***EOG***");
+                ### print("***EOG***");
             }'
 
 #       # Assemble fields into record form for storage as an
