@@ -328,6 +328,23 @@ function print_log_entries()
                 }
             }
             END {
+
+# Type description strings
+TDV = "chore;Chores,docs;Documentation Changes,feat;New Features,"\
+"fix;Bug Fixes,other;Miscellaneous Tasks,perf;Performance Enhancements,"\
+"refactor;Code Improvements,revert;Revert a Change,test;Tests,"\
+"style;Stylistic Enhancements";
+
+                # Initialise type description array
+                split(TDV, KVP, ",");
+                for (i in KVP)
+                {
+                    split(KVP[i], kvp, ";"); TYPE_DESC[kvp[1]] = kvp[2];
+                }
+
+                # Array traversal is ascending order by key
+                PROCINFO["sorted_in"] = "@ind_str_asc";
+
                 #
                 # Process previously built associative array using:
                 #
@@ -344,8 +361,8 @@ function print_log_entries()
                             split(entry, values, SUBSEP);
                             long_hash = values[1];
                             subject = values[2];
-                            # Print line to "prove" associative array loaded
-                            print(type"@"category"@"subject"@"short_hash"@"long_hash);
+                            # Print line (with type description) to "prove" associative array loaded
+                            print(TYPE_DESC[type]"@"category"@"subject"@"short_hash"@"long_hash);
                         }
                     }
                 }
