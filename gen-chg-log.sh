@@ -125,7 +125,8 @@ FAILURE=1
 # Application-specific -------------------------------------------------
 
 USAGE="$0 --[help|version] | -[hHvV] | <REPO> | <REPO> <URL>"
-APPDESC='Changelog Generator'
+APPDESC='Changelog Generator - generate a changelog, from tagged git'\
+' commits, in Markdown format.'
 VERSION=0.0.0
 
 # Subroutines ==========================================================
@@ -173,7 +174,7 @@ function badURL ()
 # ----------------------------------------------------------------------
 function usage ()
 {
-    printf "$APPDESC ($VERSION).\nUsage: $USAGE\n"
+    printf "$APPDESC\nUsage: $USAGE\n"
 }
 
 # ----------------------------------------------------------------------
