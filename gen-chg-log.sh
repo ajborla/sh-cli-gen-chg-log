@@ -70,7 +70,7 @@
 #
 # Invocation as follows:
 #
-#    gen-chg-log.sh --[help|version] | <REPO> | <REPO> <URL>
+#    gen-chg-log.sh --[help|version] | -[hHvV] | <REPO> | <REPO> <URL>
 #
 # Options for help, and version display, are available.
 #
@@ -95,9 +95,11 @@
 #
 #    # Print usage information
 #    gen-chg-log.sh --help
+#    ./gen-chg-log.sh -h
 #
 #    # Print application version number
 #    ./gen-chg-log.sh --version
+#    gen-chg-log.sh -v
 #
 #    # Prints changelog of current directory
 #    ./gen-chg-log.sh .
@@ -122,7 +124,7 @@ FAILURE=1
 
 # Application-specific -------------------------------------------------
 
-USAGE="$0 --[help|version] | <REPO> | <REPO> <URL>"
+USAGE="$0 --[help|version] | -[hHvV] | <REPO> | <REPO> <URL>"
 APPDESC='Changelog Generator'
 VERSION=0.0.0
 
